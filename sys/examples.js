@@ -21,16 +21,17 @@
 'use strict';
 
 var HyperSwitch = require('hyperswitch');
+const URI = HyperSwitch.URI;
 var path = require('path');
-
 var fsUtil = require('../lib/FeatureServiceUtil');
-
 var spec = HyperSwitch.utils.loadSpec(path.join(__dirname, 'examples.yaml'));
 
 // EXampleService
+
 function EXS(options) {
     this.options = options;
 }
+
 
 const STEP_TO_SECONDS = {
     second:    1,
@@ -40,8 +41,64 @@ const STEP_TO_SECONDS = {
 };
 
 /*
- * Function called from endpoint to generate a fake timeserie
- */
+class Exampleservices{
+
+    constructor(options) {
+        this.options = options;
+    }
+
+    fakeTimeserie (hyper, req) {
+        var requestParams = req.params;
+
+        fsUtil.validateFromAndTo(requestParams);
+
+        var fromDate = requestParams.fromDate;
+        var intervalSeconds = (requestParams.toDate - fromDate) / 1000;
+        var stepSeconds = STEP_TO_SECONDS[requestParams.step];
+
+        if (stepSeconds > intervalSeconds) {
+            fsUtil.throwIfNeeded('Step should be smaller than [from, to[ interval');
+        }
+
+        var stepNumbers = intervalSeconds / stepSeconds;
+
+        return fsUtil.normalizeResponse({
+            status: 200,
+            body: {
+                items: [...Array(stepNumbers).keys()].map(idx => {
+                    return {
+                        ts: (new Date(fromDate.getTime() + (idx * stepSeconds * 1000))).toISOString(),
+                        val: Math.random()
+                    };
+                })
+            }
+        });
+    };
+
+    meanserie (hyper,req) {
+        var requestParams = req.params;
+
+        fsUtil.validateFromAndTo(requestParams);
+
+        const furi = new URI([requestParams.domain, 'sys', 'examples',
+                  'fake-timeserie',
+                  requestParams.from,requestParams.to,requestParams.step]);
+
+        hyper.get({ uri: furi }).then(function(res) {
+            res.body = { items: {
+                startt: requestParams.fromDate,
+                endt: requestParams.toDate,
+                length: res.body.items.length,
+                mean: res.body.items.map(items => items.val).
+                    reduce((p, n) => p + n, 0) / res.body.items.length }
+            };
+            return res;
+        });
+    };
+
+}
+*/
+
 EXS.prototype.fakeTimeserie = function(hyper, req) {
     var requestParams = req.params;
 
@@ -70,13 +127,35 @@ EXS.prototype.fakeTimeserie = function(hyper, req) {
     });
 };
 
+EXS.prototype.meanserie = function(hyper,req) {
+    var requestParams = req.params;
+
+    fsUtil.validateFromAndTo(requestParams);
+
+    const furi = new URI([requestParams.domain, 'sys', 'examples', 'fake-timeserie',
+              requestParams.from,requestParams.to,requestParams.step]);
+
+    hyper.get({ uri: furi }).then(function(res) {
+        res.body = { items: {
+            startt: requestParams.fromDate,
+            endt: requestParams.toDate,
+            length: res.body.items.length,
+            mean: res.body.items.map(items => items.val).
+                reduce((p, n) => p + n, 0) / res.body.items.length }
+        };
+        return res;
+    });
+};
+
+
 module.exports = function(options) {
     var exs = new EXS(options);
 
     return {
         spec: spec,
         operations: {
-            fakeTimeserie: exs.fakeTimeserie.bind(exs)
+            fakeTimeserie: exs.fakeTimeserie.bind(exs),
+            meanserie: exs.meanserie.bind(exs)
         }
     };
 };
