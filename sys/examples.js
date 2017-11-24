@@ -1,5 +1,4 @@
 /* Copyright (C) 2017 Project-EBDO
- *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -12,14 +11,11 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
 /*
  * EBDO-FeatureService Examples functions
  * Author: Joseph Allemandou
  */
 'use strict';
-
 var HyperSwitch = require('hyperswitch');
 const URI = HyperSwitch.URI;
 var path = require('path');
@@ -27,7 +23,6 @@ var fsUtil = require('../lib/FeatureServiceUtil');
 var spec = HyperSwitch.utils.loadSpec(path.join(__dirname, 'examples.yaml'));
 
 // EXampleService
-
 function EXS(options) {
     this.options = options;
 }
@@ -39,7 +34,6 @@ const STEP_TO_SECONDS = {
     hour:   3600,
     day:   86400
 };
-
 /*
 class Exampleservices{
 
@@ -136,14 +130,16 @@ EXS.prototype.meanserie = function(hyper,req) {
               requestParams.from,requestParams.to,requestParams.step]);
 
     hyper.get({ uri: furi }).then(function(res) {
-        res.body = { items: {
-            startt: requestParams.fromDate,
-            endt: requestParams.toDate,
-            length: res.body.items.length,
-            mean: res.body.items.map(items => items.val).
-                reduce((p, n) => p + n, 0) / res.body.items.length }
-        };
-        return res;
+        return hyper.get({ uri: furi }).then(function(res) {
+            res.body = { items: {
+                startt: requestParams.fromDate,
+                endt: requestParams.toDate,
+                length: res.body.items.length,
+                mean: res.body.items.map(items => items.val).
+                    reduce((p, n) => p + n, 0) / res.body.items.length }
+            };
+            return res;
+        });
     });
 };
 
