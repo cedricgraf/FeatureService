@@ -136,6 +136,48 @@ paths:
               uri: /{domain}/sys/examples/fake-timeserie/{from}/{to}/{step}
       x-monitor: false
 
+
+  /search/{index}/{type}/{param}:
+    get:
+      tags:
+        - EBDO FeatureService Examples
+      summary: Search a template
+      description: |
+        Get an index in data
+      produces:
+        - application/json
+      parameters:
+        - name: index
+          in: path
+          description: index of the template
+          type: string
+          required: true
+        - name: type
+          in: path
+          description: type of template
+          type: string
+          required: true
+        - name: param
+          in: path
+          description: condition of the search
+          type: string
+          required: true
+      responses:
+        '200':
+          description: search of template
+          schema:
+            $ref: '#/definitions/search'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/problem'
+      x-request-handler:
+        - get_from_backend:
+            request:
+              uri: /{domain}/sys/examples/search/{index}/{type}/{param}
+      x-monitor: false
+
+
 definitions:
   # A https://tools.ietf.org/html/draft-nottingham-http-problem
   problem:
@@ -186,3 +228,12 @@ definitions:
             mean:
               type: number
               format: double
+
+  search:
+    properties:
+      items:
+        type: array
+        items:
+          properties:
+            template:
+              type: string
