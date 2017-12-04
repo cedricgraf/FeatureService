@@ -28,3 +28,8 @@ paths:
         get:
           summarry: get mean of a fake timeserie
           operationId: meanserie
+
+    /search/{index}/{type}/{param}:
+      get:
+        summary: search templates
+        operationId: search
